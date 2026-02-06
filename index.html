@@ -257,8 +257,8 @@
         <div class="sidebar-title-row">
             <h1>決定書檢索</h1>
             <div class="view-btn-group">
-                <button class="view-toggle-btn active" id="btn-view-doc" onclick="switchView('doc')">列表</button>
-                <button class="view-toggle-btn" id="btn-view-list" onclick="switchView('list')">名冊</button>
+                <button class="view-toggle-btn" id="btn-view-doc" onclick="switchView('doc')">列表</button>
+                <button class="view-toggle-btn active" id="btn-view-list" onclick="switchView('list')">名冊</button>
                 <button class="view-toggle-btn" id="btn-view-stats" onclick="switchView('stats')">統計</button>
             </div>
         </div>
@@ -275,14 +275,14 @@
 </aside>
 
 <main>
-    <div class="meta-bar" id="meta-bar">
+    <div class="meta-bar" id="meta-bar" style="display: none;">
         <div class="meta-item"><strong>發文字號:</strong> <span id="meta-case-no">-</span></div>
         <div class="meta-item"><strong>當事人:</strong> <span id="meta-subject">-</span></div>
         <div class="meta-item"><strong>日期:</strong> <span id="meta-date">-</span></div>
         <div class="tags-container" id="meta-tags"></div>
     </div>
 
-    <div class="view-container active" id="doc-view-container">
+    <div class="view-container" id="doc-view-container">
         <div class="document-container" id="doc-container">
             <div class="doc-header">
                 <div class="doc-title">促進轉型正義委員會決定書</div>
@@ -291,7 +291,7 @@
         </div>
     </div>
 
-    <div class="view-container" id="list-view-container">
+    <div class="view-container active" id="list-view-container">
         <div class="revocation-list-container">
             <h2 style="margin-bottom:20px; color:#2c3e50;">撤銷公告名冊</h2>
             <div class="tab-group">
@@ -544,7 +544,7 @@
         allDecisions = sortCases(window.DATA_STORE.decisions || []);
         allRevocations = window.DATA_STORE.revocations || [];
         renderSidebar(allDecisions);
-        switchView('doc');
+        switchView('list');
         if (allDecisions.length) renderDocument(allDecisions[0]);
         switchListTab(1);
     }
