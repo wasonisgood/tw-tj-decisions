@@ -9,23 +9,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #f9f7f1; /* Paper-like off-white */
+            --bg-color: #f9f7f1;
             --sidebar-bg: #2c3e50;
             --sidebar-hover: #34495e;
             --sidebar-active: #c0392b;
             --sidebar-text: #ecf0f1;
             --text-color: #2c3e50;
-            --accent-color: #c0392b; /* Official seal red */
+            --accent-color: #c0392b;
             --border-color: #dcd6cc;
+            
+            /* Tag Colors */
+            --tag-crime-bg: #ffebee; --tag-crime-text: #c62828;
+            --tag-reason-bg: #e8f5e9; --tag-reason-text: #2e7d32;
+            --tag-sentence-bg: #f3e5f5; --tag-sentence-text: #7b1fa2;
+
+            /* Type Badges */
+            --badge-orig-bg: #3498db;
+            --badge-rev-bg: #e67e22;
+
             --font-serif: 'Noto Serif TC', serif;
             --font-sans: 'Noto Sans TC', sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             background-color: var(--bg-color);
@@ -38,7 +44,7 @@
 
         /* Sidebar */
         aside {
-            width: 350px;
+            width: 360px;
             background-color: var(--sidebar-bg);
             color: var(--sidebar-text);
             display: flex;
@@ -54,274 +60,193 @@
             flex-shrink: 0;
         }
 
+        .sidebar-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
         .sidebar-header h1 {
             font-size: 1.2rem;
-            margin-bottom: 15px;
             font-weight: 700;
             letter-spacing: 1px;
             color: #fff;
+            margin: 0;
         }
 
-        .search-box {
-            position: relative;
-        }
+        .view-btn-group { display: flex; gap: 5px; }
 
-        .search-input {
-            width: 100%;
-            padding: 10px 10px 10px 35px;
-            border: none;
-            border-radius: 4px;
-            background-color: rgba(255,255,255,0.1);
+        .view-toggle-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
             color: #fff;
-            font-size: 0.9rem;
-            outline: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .view-toggle-btn:hover { background: rgba(255,255,255,0.25); }
+        .view-toggle-btn.active { background: var(--accent-color); border-color: var(--accent-color); }
+
+        .search-box { position: relative; }
+        .search-input {
+            width: 100%; padding: 10px 10px 10px 35px; border: none; border-radius: 4px;
+            background-color: rgba(255,255,255,0.1); color: #fff; font-size: 0.9rem; outline: none;
             transition: background 0.2s;
         }
+        .search-input:focus { background-color: rgba(255,255,255,0.2); }
+        .search-input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 0.8rem; }
 
-        .search-input:focus {
-            background-color: rgba(255,255,255,0.2);
+        /* Filter Banner */
+        .filter-banner {
+            background-color: #f1c40f;
+            color: #333;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
         }
+        .filter-close { cursor: pointer; font-size: 1.1rem; padding: 0 5px; }
+        .filter-close:hover { color: #000; }
 
-        .search-input::placeholder {
-            color: rgba(255,255,255,0.5);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255,255,255,0.5);
-            font-size: 0.8rem;
-        }
-
-        .case-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px 0;
-        }
-
+        .case-list { flex: 1; overflow-y: auto; padding: 10px 0; }
+        
         .case-item {
-            padding: 15px 20px;
+            padding: 12px 20px;
             cursor: pointer;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             transition: background-color 0.2s, padding-left 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
+        .case-item:hover { background-color: var(--sidebar-hover); padding-left: 25px; }
+        .case-item.active { background-color: rgba(255,255,255,0.1); border-left: 4px solid var(--accent-color); }
 
-        .case-item:hover {
-            background-color: var(--sidebar-hover);
-            padding-left: 25px;
+        .case-type-badge {
+            font-size: 0.7rem;
+            padding: 2px 5px;
+            border-radius: 3px; color: #fff; font-weight: bold; flex-shrink: 0; width: 24px; text-align: center;
         }
+        .badge-orig { background-color: var(--badge-orig-bg); }
+        .badge-rev { background-color: var(--badge-rev-bg); }
 
-        .case-item.active {
-            background-color: rgba(255,255,255,0.1);
-            border-left: 4px solid var(--accent-color);
-        }
-
-        .case-id {
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 4px;
-            font-weight: 500;
-        }
-
-        .case-subject {
-            font-size: 1rem;
-            font-weight: 500;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .case-info { flex: 1; overflow: hidden; }
+        .case-id { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 2px; font-weight: 500; }
+        .case-subject { font-size: 0.95rem; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        .empty-state {
-            padding: 20px;
-            text-align: center;
-            color: rgba(255,255,255,0.4);
-            font-size: 0.9rem;
-        }
+        .empty-state { padding: 20px; text-align: center; color: rgba(255,255,255,0.4); font-size: 0.9rem; }
 
         /* Main Content */
-        main {
-            flex: 1;
-            position: relative;
-            overflow: hidden; /* Use internal scroll container */
-            display: flex;
-            flex-direction: column;
-        }
+        main { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* Metadata Header Bar (in main view) */
+        /* Metadata Header */
         .meta-bar {
-            background-color: #fff;
-            border-bottom: 1px solid #eee;
-            padding: 15px 40px;
-            display: flex;
-            gap: 40px;
-            font-size: 0.9rem;
-            color: #666;
-            flex-shrink: 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            background-color: #fff; border-bottom: 1px solid #eee; padding: 15px 40px;
+            display: flex; align-items: center; gap: 30px; font-size: 0.9rem; color: #666;
+            flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.03); flex-wrap: wrap;
         }
+        .meta-item strong { color: #333; margin-right: 5px; }
 
-        .meta-item strong {
-            color: #333;
-            margin-right: 5px;
-        }
+        .tags-container { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+        .tag { font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+        .tag-crime { background-color: var(--tag-crime-bg); color: var(--tag-crime-text); border: 1px solid rgba(198, 40, 40, 0.2); }
+        .tag-reason { background-color: var(--tag-reason-bg); color: var(--tag-reason-text); border: 1px solid rgba(46, 125, 50, 0.2); }
+        .tag-sentence { background-color: var(--tag-sentence-bg); color: var(--tag-sentence-text); border: 1px solid rgba(123, 31, 162, 0.2); }
 
-        .content-scroll-container {
-            flex: 1;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            padding: 40px 60px;
-        }
+        .view-container { flex: 1; overflow-y: auto; scroll-behavior: smooth; padding: 40px 60px; display: none; }
+        .view-container.active { display: block; }
 
-        .document-container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 60px 80px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            min-height: 100%;
-        }
+        /* Document View */
+        .document-container { max-width: 900px; margin: 0 auto; background: #fff; padding: 60px 80px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 100%; }
+        .doc-header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid var(--accent-color); padding-bottom: 20px; }
+        .doc-title { font-family: var(--font-serif); font-size: 2rem; font-weight: 700; margin-bottom: 10px; color: #000; }
+        .doc-subtitle { font-family: var(--font-serif); font-size: 1.2rem; color: #555; }
 
-        .doc-header {
-            text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 2px solid var(--accent-color);
-            padding-bottom: 20px;
-        }
-
-        .doc-title {
-            font-family: var(--font-serif);
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #000;
-        }
-
-        .doc-subtitle {
-            font-family: var(--font-serif);
-            font-size: 1.2rem;
-            color: #555;
-        }
-
-        /* Main Text (主文) Box */
-        .main-text-box {
-            background-color: #fdf2f2;
-            border-left: 5px solid var(--accent-color);
-            padding: 20px 30px;
-            margin-bottom: 40px;
-            font-family: var(--font-serif);
-            font-size: 1.1rem;
-            line-height: 1.8;
-            color: #2c3e50;
-        }
-
-        .main-text-label {
-            font-weight: 700;
-            color: var(--accent-color);
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        /* Reasoning Content */
-        .content-section {
-            font-family: var(--font-serif);
-            line-height: 1.8;
-            color: #333;
-        }
-
-        .level-1 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-top: 40px;
-            margin-bottom: 20px;
-            color: #000;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .level-2 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            color: #444;
-            padding-left: 0;
-        }
-
-        .level-3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            color: #555;
-            padding-left: 0; 
-        }
+        .main-text-box { background-color: #fdf2f2; border-left: 5px solid var(--accent-color); padding: 20px 30px; margin-bottom: 40px; font-family: var(--font-serif); font-size: 1.1rem; line-height: 1.8; color: #2c3e50; }
+        .main-text-label { font-weight: 700; color: var(--accent-color); margin-bottom: 10px; display: block; }
         
-        .level-4, .level-5 {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-top: 15px;
-            color: #666;
-        }
+        .content-section { font-family: var(--font-serif); line-height: 1.8; color: #333; }
+        .level-1 { font-size: 1.4rem; font-weight: 700; margin-top: 40px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #000; }
+        .level-2 { font-size: 1.2rem; font-weight: 600; margin-top: 25px; margin-bottom: 15px; color: #444; }
+        .level-3 { font-size: 1.1rem; font-weight: 600; margin-top: 20px; margin-bottom: 10px; color: #555; }
+        .level-4, .level-5 { font-size: 1rem; font-weight: 600; margin-top: 15px; color: #666; }
+        .text-paragraph { margin-bottom: 15px; text-align: justify; font-size: 1.05rem; }
+        .indent-1 { margin-left: 0; } .indent-2 { margin-left: 1.5em; } .indent-3 { margin-left: 3em; }
 
-        .text-paragraph {
-            margin-bottom: 15px;
-            text-align: justify;
-            font-size: 1.05rem;
-        }
+        .table-container { margin-top: 40px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-family: var(--font-sans); font-size: 0.9rem; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px 15px; text-align: left; vertical-align: top; }
+        th { background-color: #f4f4f4; font-weight: 600; color: #333; white-space: nowrap; }
+        tr:nth-child(even) { background-color: #fafafa; }
+        .highlight { background-color: #ffe066; color: #000; }
 
-        .indent-1 { margin-left: 0; }
-        .indent-2 { margin-left: 1.5em; }
-        .indent-3 { margin-left: 3em; }
+        /* Stats Dashboard */
+        .stats-dashboard { max-width: 1000px; margin: 0 auto; }
+        .stats-header { margin-bottom: 40px; }
+        .stats-header h2 { font-size: 1.8rem; margin-bottom: 10px; color: #2c3e50; }
+        .stats-header p { color: #666; }
 
-        /* Tables */
-        .table-container {
-            margin-top: 40px;
-            overflow-x: auto;
-        }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .stat-card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--accent-color); display: block; margin-bottom: 5px; }
+        .stat-label { font-size: 0.9rem; color: #666; text-transform: uppercase; letter-spacing: 1px; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: var(--font-sans);
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px 15px;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        th {
-            background-color: #f4f4f4;
-            font-weight: 600;
-            color: #333;
-            white-space: nowrap;
-        }
-
-        tr:nth-child(even) {
-            background-color: #fafafa;
-        }
+        .charts-section { display: grid; grid-template-columns: 1fr; gap: 40px; padding-bottom: 60px; }
+        .chart-card { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .chart-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; color: #2c3e50; border-left: 4px solid var(--accent-color); padding-left: 10px; }
         
-        /* Highlight match */
-        .highlight {
-            background-color: #ffe066;
-            color: #000;
-        }
+        .bar-chart { display: flex; flex-direction: column; gap: 15px; }
+        .chart-row { display: flex; align-items: center; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; }
+        .chart-row:hover { opacity: 0.8; }
+        .chart-label { width: 160px; text-align: right; padding-right: 15px; color: #555; font-weight: 500; }
+        .chart-bar-container { flex: 1; background: #eee; height: 20px; border-radius: 10px; overflow: hidden; position: relative; }
+        .chart-bar { height: 100%; border-radius: 10px; transition: width 1s ease-out; }
+        .chart-bar.crime { background-color: #e74c3c; }
+        .chart-bar.reason { background-color: #27ae60; }
+        .chart-bar.sentence { background-color: #8e44ad; }
+        .chart-value { margin-left: 10px; width: 40px; font-weight: 700; color: #333; }
 
-        /* Responsive */
+        /* Revocation List View */
+        .revocation-list-container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .tab-group { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .tab-btn {
+            padding: 15px 25px; font-size: 1rem; cursor: pointer; font-weight: 600; color: #777; border-bottom: 3px solid transparent; transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #333; background: #f9f9f9; }
+        .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .tab-desc {
+            background: #f8f9fa; padding: 15px; border-radius: 6px; color: #555; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.6; border-left: 4px solid #aaa;
+        }
+        .revocation-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .revocation-table th { background: #2c3e50; color: #fff; padding: 12px; text-align: left; }
+        .revocation-table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .revocation-table tr:hover { background: #f1f1f1; }
+        .cell-name { font-weight: 700; color: #2c3e50; }
+        .cell-crime { color: #c62828; }
+        .cell-sentence { color: #7b1fa2; }
+        .cell-court { color: #2980b9; }
+        .btn-link {
+            display: inline-block; padding: 4px 8px; background: var(--accent-color); color: #fff;
+            border-radius: 4px; text-decoration: none; font-size: 0.8rem; cursor: pointer; border: none;
+        }
+        .pagination { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 30px; }
+        .page-num-input { width: 50px; padding: 5px; text-align: center; border: 1px solid #ddd; border-radius: 4px; }
+
         @media (max-width: 768px) {
             body { flex-direction: column; overflow: auto; }
             aside { width: 100%; height: 300px; }
             main { height: auto; }
-            .content-scroll-container { padding: 20px; }
+            .view-container { padding: 20px; }
             .document-container { padding: 30px 20px; }
-            .meta-bar { flex-direction: column; gap: 10px; padding: 15px 20px; }
+            .meta-bar { flex-direction: column; align-items: flex-start; gap: 10px; padding: 15px 20px; }
+            .revocation-table th, .revocation-table td { display: block; width: 100%; }
+            .revocation-table tr { display: block; margin-bottom: 15px; border-bottom: 2px solid #ddd; }
         }
     </style>
 </head>
@@ -329,309 +254,300 @@
 
 <aside>
     <div class="sidebar-header">
-        <h1>決定書檢索</h1>
+        <div class="sidebar-title-row">
+            <h1>決定書檢索</h1>
+            <div class="view-btn-group">
+                <button class="view-toggle-btn active" id="btn-view-doc" onclick="switchView('doc')">列表</button>
+                <button class="view-toggle-btn" id="btn-view-list" onclick="switchView('list')">名冊</button>
+                <button class="view-toggle-btn" id="btn-view-stats" onclick="switchView('stats')">統計</button>
+            </div>
+        </div>
         <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input type="text" class="search-input" id="search-input" placeholder="搜尋案號、當事人...">
+            <input type="text" class="search-input" id="search-input" placeholder="搜尋案號、當事人、內文...">
         </div>
     </div>
-    <div class="case-list" id="case-list">
-        <!-- List items injected here -->
+    <div id="filter-banner" class="filter-banner" style="display: none;">
+        <span id="filter-text">篩選中: </span>
+        <span class="filter-close" onclick="clearFilter()">×</span>
     </div>
+    <div class="case-list" id="case-list"></div>
 </aside>
 
 <main>
-    <div class="meta-bar">
-        <div class="meta-item">
-            <strong>發文字號:</strong> <span id="meta-case-no">-</span>
-        </div>
-        <div class="meta-item">
-            <strong>當事人:</strong> <span id="meta-subject">-</span>
-        </div>
-        <div class="meta-item">
-            <strong>日期:</strong> <span id="meta-date">-</span>
-        </div>
+    <div class="meta-bar" id="meta-bar">
+        <div class="meta-item"><strong>發文字號:</strong> <span id="meta-case-no">-</span></div>
+        <div class="meta-item"><strong>當事人:</strong> <span id="meta-subject">-</span></div>
+        <div class="meta-item"><strong>日期:</strong> <span id="meta-date">-</span></div>
+        <div class="tags-container" id="meta-tags"></div>
     </div>
 
-    <div class="content-scroll-container" id="scroll-container">
+    <div class="view-container active" id="doc-view-container">
         <div class="document-container" id="doc-container">
-            <!-- Content will be injected here -->
             <div class="doc-header">
                 <div class="doc-title">促進轉型正義委員會決定書</div>
                 <div class="doc-subtitle">請從左側列表選擇案件</div>
             </div>
         </div>
     </div>
+
+    <div class="view-container" id="list-view-container">
+        <div class="revocation-list-container">
+            <h2 style="margin-bottom:20px; color:#2c3e50;">撤銷公告名冊</h2>
+            <div class="tab-group">
+                <div class="tab-btn active" id="tab-cat-1" onclick="switchListTab(1)">第一類：既有賠償/補償</div>
+                <div class="tab-btn" id="tab-cat-2" onclick="switchListTab(2)">第二類：促轉會平復</div>
+            </div>
+            <div class="tab-desc" id="tab-desc"></div>
+            <div style="overflow-x:auto;">
+                <table class="revocation-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>案號/字號</th>
+                            <th>裁判機關</th>
+                            <th>罪名</th>
+                            <th>刑度</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="revocation-tbody"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="pagination-controls">
+                <button class="view-toggle-btn" onclick="changePage(-1)">上一頁</button>
+                <span id="page-info">第 1 頁</span>
+                <button class="view-toggle-btn" onclick="changePage(1)">下一頁</button>
+                <input type="number" id="page-jump" class="page-num-input" min="1" placeholder="頁碼">
+                <button class="view-toggle-btn" onclick="goToPage()">跳轉</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="view-container" id="stats-view-container">
+        <div class="stats-dashboard">
+            <div class="stats-grid" id="stats-overview"></div>
+            <div class="charts-section">
+                <div class="chart-card"><div class="chart-title">涉案類型推估</div><div class="bar-chart" id="chart-crime"></div></div>
+                <div class="chart-card"><div class="chart-title">刑度與處分類型</div><div class="bar-chart" id="chart-sentence"></div></div>
+                <div class="chart-card"><div class="chart-title">平反理由推估</div><div class="bar-chart" id="chart-reason"></div></div>
+            </div>
+        </div>
+    </div>
 </main>
 
-<!-- Load Data -->
 <script src="decision_data.js"></script>
-
 <script>
-    // --- DOM Elements ---
+    // --- State ---
+    let allDecisions = [], allRevocations = [], filteredRevocations = [];
+    let currentPage = 1, pageSize = 20, currentListCat = 1;
+    let currentFilter = { term: '', tag: null };
+
+    // --- DOM ---
     const caseListEl = document.getElementById('case-list');
     const searchInput = document.getElementById('search-input');
-    const container = document.getElementById('doc-container');
-    const scrollContainer = document.getElementById('scroll-container');
-    const metaCaseNo = document.getElementById('meta-case-no');
-    const metaSubject = document.getElementById('meta-subject');
-    const metaDate = document.getElementById('meta-date');
+    const revocationTbody = document.getElementById('revocation-tbody');
+    const pageInfo = document.getElementById('page-info');
+    const docViewContainer = document.getElementById('doc-view-container');
+    const listViewContainer = document.getElementById('list-view-container');
+    const statsViewContainer = document.getElementById('stats-view-container');
+    const metaBar = document.getElementById('meta-bar');
 
-    let allCases = []; // To store data from window.DECISIONS_DATA
+    const TAG_PATTERNS = {
+        crimes: [
+            { label: '叛亂', pattern: /(叛亂|懲治叛亂條例)/ },
+            { label: '匪諜/通匪', pattern: /(匪諜|通匪|知匪不報|為匪宣傳)/ },
+            { label: '參加叛亂組織', pattern: /(參加叛亂組織|加入叛亂組織)/ },
+            { label: '閱讀禁書/思想', pattern: /(反動書刊|思想偏狹|閱讀左傾)/ },
+            { label: '槍砲彈藥', pattern: /(槍砲|彈藥|刀械)/ }
+        ],
+        reasons: [
+            { label: '疑遭刑求', pattern: /(刑求|不正訊問|非任意性|自白|逼供)/ },
+            { label: '證據不足', pattern: /(證據不足|無其他證據|唯一證據|推測之詞)/ },
+            { label: '違反自由民主憲政秩序', pattern: /(違反自由民主憲政秩序|違憲|大法官解釋)/ },
+            { label: '審判瑕疵', pattern: /(未經審判|管轄錯誤|審判程序違法)/ },
+            { label: '追訴權消滅', pattern: /(追訴權|時效完成)/ }
+        ],
+        sentences: [
+            { label: '死刑', pattern: /(主文[\s\S]{0,100}死刑|執行死刑|處死刑)/ },
+            { label: '無期徒刑', pattern: /(主文[\s\S]{0,100}無期徒刑|處無期徒刑)/ },
+            { label: '有期徒刑', pattern: /(主文[\s\S]{0,100}有期徒刑|處有期徒刑)/ },
+            { label: '感化/感訓', pattern: /(感化教育|感訓|交付感化)/ },
+            { label: '沒收財產', pattern: /(沒收財產|沒收其財產)/ }
+        ]
+    };
 
-    // --- Render Functions ---
+    const CAT_DESC = {
+        1: "一、受難者或受裁判者依二二八事件處理及賠償條例、戒嚴時期不當叛亂暨匪諜審判案件補償條例與戒嚴時期人民受損權利回復條例之規定，而獲得賠償、補償或回復受損權利之刑事審判案件。",
+        2: "二、前款以外經促轉會依職權或申請，認屬依本條例應平復司法不法之刑事審判案件。"
+    };
 
-    function renderMetadata(meta) {
-        metaCaseNo.textContent = meta.case_no || '未記載';
-        metaSubject.textContent = meta.subject || '未記載';
-        metaDate.textContent = meta.date || '未記載';
-    }
-
-    function renderReasoningRecursively(items, containerDiv) {
-        if (!items || items.length === 0) return;
-
-        items.forEach(item => {
-            const wrapper = document.createElement('div');
-            
-            // Render Header based on level
-            if (item.text) {
-                const level = item.level || 3;
-                const header = document.createElement(level === 1 ? 'h2' : (level === 2 ? 'h3' : (level === 3 ? 'h4' : 'h5')));
-                header.className = `level-${level} indent-${Math.max(0, level - 1)}`;
-                header.textContent = item.text;
-                wrapper.appendChild(header);
-            }
-
-            // Render content paragraphs
-            if (item.content && item.content.length > 0) {
-                item.content.forEach(paraText => {
-                    const p = document.createElement('p');
-                    p.className = 'text-paragraph indent-' + (item.level || 1);
-                    p.textContent = paraText;
-                    wrapper.appendChild(p);
-                });
-            }
-
-            // Recursion for children
-            if (item.children && item.children.length > 0) {
-                renderReasoningRecursively(item.children, wrapper);
-            }
-
-            containerDiv.appendChild(wrapper);
+    // --- Logic ---
+    function sortCases(cases) {
+        return cases.sort((a, b) => {
+            const getInfo = (item) => {
+                const no = item.metadata.case_no || "";
+                let type = no.includes("促轉司字") ? 0 : (no.includes("復查") ? 1 : 2);
+                const num = parseInt((no.match(/第(\d+)號/) || [])[1]) || 999999;
+                return { type, num };
+            };
+            const infoA = getInfo(a), infoB = getInfo(b);
+            return infoA.type !== infoB.type ? infoA.type - infoB.type : infoA.num - infoB.num;
         });
     }
 
-    function renderTables(tables, containerDiv) {
-        if (!tables || tables.length === 0) return;
+    function analyzeCase(item) {
+        if (item._analysis) return item._analysis;
+        const text = (item.content.full_text || '') + (item.content.main_text || '') + (item.content.reasoning || '');
+        const res = { crimes: [], reasons: [], sentences: [] };
+        for (let k in TAG_PATTERNS) {
+            TAG_PATTERNS[k].forEach(p => { if (p.pattern.test(text)) res[k].push(p.label); });
+        }
+        return item._analysis = res;
+    }
 
-        const tableSection = document.createElement('div');
-        tableSection.className = 'table-container';
-        
-        const header = document.createElement('h3');
-        header.className = 'level-2';
-        header.textContent = '附表 / 相關表格';
-        tableSection.appendChild(header);
+    function switchView(view) {
+        [docViewContainer, listViewContainer, statsViewContainer].forEach(c => c.classList.remove('active'));
+        [document.getElementById('btn-view-doc'), document.getElementById('btn-view-list'), document.getElementById('btn-view-stats')].forEach(b => b.classList.remove('active'));
+        metaBar.style.display = (view === 'doc') ? 'flex' : 'none';
+        document.getElementById(`btn-view-${view}`).classList.add('active');
+        document.getElementById(`${view}-view-container`).classList.add('active');
+        if (view === 'list') renderRevocationList();
+        if (view === 'stats') renderStatsDashboard();
+    }
 
-        tables.forEach(tbl => {
-            const tableEl = document.createElement('table');
-            const tbody = document.createElement('tbody');
+    function switchListTab(cat) {
+        currentListCat = cat;
+        document.getElementById('tab-cat-1').classList.toggle('active', cat === 1);
+        document.getElementById('tab-cat-2').classList.toggle('active', cat === 2);
+        document.getElementById('tab-desc').textContent = CAT_DESC[cat];
+        currentPage = 1; renderRevocationList();
+    }
 
-            tbl.data.forEach((row, rowIndex) => {
-                const tr = document.createElement('tr');
-                row.forEach(cellText => {
-                    const cell = document.createElement(rowIndex === 0 ? 'th' : 'td');
-                    cell.textContent = cellText;
-                    tr.appendChild(cell);
-                });
-                tbody.appendChild(tr);
-            });
-
-            tableEl.appendChild(tbody);
-            tableSection.appendChild(tableEl);
+    function renderRevocationList() {
+        const term = searchInput.value.toLowerCase();
+        filteredRevocations = allRevocations.filter(r => {
+            if (r.category !== currentListCat) return false;
+            if (!term) return true;
+            return (r.name || '').toLowerCase().includes(term) || JSON.stringify(r).toLowerCase().includes(term);
         });
 
-        containerDiv.appendChild(tableSection);
-    }
-
-    function renderDocument(data) {
-        // Clear container
-        container.innerHTML = '';
-        scrollContainer.scrollTop = 0; // Reset scroll
-
-        // 1. Header
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'doc-header';
+        const totalPages = Math.ceil(filteredRevocations.length / pageSize);
+        const data = filteredRevocations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
         
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'doc-title';
-        titleDiv.textContent = '促進轉型正義委員會決定書';
-        
-        const subTitleDiv = document.createElement('div');
-        subTitleDiv.className = 'doc-subtitle';
-        subTitleDiv.textContent = data.filename ? data.filename.replace('.json', '').replace('.pdf', '') : (data.metadata.case_no || '');
-
-        headerDiv.appendChild(titleDiv);
-        headerDiv.appendChild(subTitleDiv);
-        container.appendChild(headerDiv);
-
-        // 2. Main Text (主文)
-        if (data.content && data.content.main_text) {
-            const mainTextBox = document.createElement('div');
-            mainTextBox.className = 'main-text-box';
-            
-            const label = document.createElement('span');
-            label.className = 'main-text-label';
-            label.textContent = '【主文】';
-            
-            const text = document.createElement('p');
-            text.textContent = data.content.main_text;
-
-            mainTextBox.appendChild(label);
-            mainTextBox.appendChild(text);
-            container.appendChild(mainTextBox);
-        }
-
-        // 3. Facts (事實) - 新增區塊
-        if (data.content && data.content.facts) {
-            const factsBox = document.createElement('div');
-            factsBox.className = 'main-text-box';
-            factsBox.style.backgroundColor = '#f0f7ff'; // 區別於主文的淡藍色
-            factsBox.style.borderLeftColor = '#3498db';
-            
-            const label = document.createElement('span');
-            label.className = 'main-text-label';
-            label.style.color = '#3498db';
-            label.textContent = '【事實】';
-            
-            const text = document.createElement('p');
-            text.style.whiteSpace = 'pre-wrap';
-            text.textContent = data.content.facts;
-
-            factsBox.appendChild(label);
-            factsBox.appendChild(text);
-            container.appendChild(factsBox);
-        }
-
-        // 4. Reasoning (理由) Structure
-        const contentSection = document.createElement('div');
-        contentSection.className = 'content-section';
-        
-        if (data.structured_reasoning && data.structured_reasoning.length > 0) {
-            renderReasoningRecursively(data.structured_reasoning, contentSection);
-        } else if (data.content && data.content.reasoning) {
-            const p = document.createElement('p');
-            p.className = 'text-paragraph';
-            p.style.whiteSpace = 'pre-wrap';
-            p.textContent = data.content.reasoning;
-            contentSection.appendChild(p);
-        } else if (data.content && data.content.full_text) {
-            const p = document.createElement('p');
-            p.className = 'text-paragraph';
-            p.style.whiteSpace = 'pre-wrap';
-            p.textContent = data.content.full_text;
-            contentSection.appendChild(p);
-        } else {
-             const p = document.createElement('p');
-             p.textContent = "(無內容資料)";
-             contentSection.appendChild(p);
-        }
-
-        container.appendChild(contentSection);
-
-        // 5. Tables
-        if (data.tables && data.tables.length > 0) {
-            renderTables(data.tables, container);
-        }
-
-        // 6. Update Metadata Bar
-        renderMetadata(data.metadata || {});
-    }
-
-    // --- Sidebar & Search Functions ---
-
-    function highlightText(text, term) {
-        if (!term) return text;
-        const regex = new RegExp(`(${term})`, 'gi');
-        return text.replace(regex, '<span class="highlight">$1</span>');
-    }
-
-    function renderSidebar(cases, searchTerm = '') {
-        caseListEl.innerHTML = '';
-        
-        if (cases.length === 0) {
-            caseListEl.innerHTML = '<div class="empty-state">查無相關案件</div>';
-            return;
-        }
-
-        cases.forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'case-item';
-            el.dataset.id = item.id;
-            
-            let caseNo = item.metadata.case_no || '';
-            let subject = item.metadata.subject || item.filename;
-            
-            el.innerHTML = `
-                <div class="case-id">${caseNo}</div>
-                <div class="case-subject">${subject}</div>
+        revocationTbody.innerHTML = data.length ? '' : '<tr><td colspan="6" style="text-align:center;">無資料</td></tr>';
+        data.forEach(r => {
+            const format = (v) => Array.isArray(v) ? v.join('<br>') : v;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="cell-name">${r.name || ''}</td>
+                <td>${format(r.case_id)}</td>
+                <td class="cell-court">${format(r.court)}</td>
+                <td class="cell-crime">${format(r.crime)}</td>
+                <td class="cell-sentence">${format(r.sentence)}</td>
+                <td>${r.linked_decision_id ? `<button class="btn-link" onclick="jumpToDecision('${r.linked_decision_id}')">決定書</button>` : '-'}</td>
             `;
-            
-            el.addEventListener('click', () => {
-                document.querySelectorAll('.case-item').forEach(c => c.classList.remove('active'));
-                el.classList.add('active');
-                renderDocument(item);
+            revocationTbody.appendChild(tr);
+        });
+        pageInfo.textContent = `第 ${currentPage} / ${totalPages || 1} 頁 (共 ${filteredRevocations.length} 筆)`;
+    }
+
+    function changePage(d) {
+        const max = Math.ceil(filteredRevocations.length / pageSize);
+        if (currentPage + d >= 1 && currentPage + d <= max) { currentPage += d; renderRevocationList(); listViewContainer.scrollTop = 0; }
+    }
+    
+    function goToPage() {
+        const val = parseInt(document.getElementById('page-jump').value);
+        const max = Math.ceil(filteredRevocations.length / pageSize);
+        if (val >= 1 && val <= max) { currentPage = val; renderRevocationList(); listViewContainer.scrollTop = 0; }
+    }
+
+    function jumpToDecision(id) {
+        const d = allDecisions.find(x => x.id === id);
+        if (d) { switchView('doc'); renderDocument(d); window.location.hash = encodeURIComponent(d.id); }
+    }
+
+    function renderDocument(data, term = '') {
+        const highlight = (t, s) => { if(!s) return t; return t.replace(new RegExp(`(${s})`, 'gi'), '<span class="highlight">$1</span>'); };
+        const container = document.getElementById('doc-container');
+        container.innerHTML = `<div class="doc-header"><div class="doc-title">促進轉型正義委員會決定書</div><div class="doc-subtitle">${data.metadata.case_no || data.filename}</div></div>`;
+        
+        if (data.content.main_text) container.innerHTML += `<div class="main-text-box"><span class="main-text-label">【主文】</span><p>${highlight(data.content.main_text, term)}</p></div>`;
+        if (data.content.facts) container.innerHTML += `<div class="main-text-box" style="background:#f0f7ff; border-left-color:#3498db;"><span class="main-text-label" style="color:#3498db">【事實】</span><p style="white-space:pre-wrap">${highlight(data.content.facts, term)}</p></div>`;
+        
+        const sec = document.createElement('div'); sec.className = 'content-section';
+        if (data.structured_reasoning && data.structured_reasoning.length) renderReasoning(data.structured_reasoning, sec, term);
+        else sec.innerHTML = `<p style="white-space:pre-wrap">${highlight(data.content.reasoning || data.content.full_text || '', term)}</p>`;
+        container.appendChild(sec);
+        
+        document.getElementById('meta-case-no').textContent = data.metadata.case_no || '-';
+        document.getElementById('meta-subject').textContent = data.metadata.subject || '-';
+        document.getElementById('meta-date').textContent = data.metadata.date || '-';
+        
+        const tagsBox = document.getElementById('meta-tags'); tagsBox.innerHTML = '';
+        const tags = analyzeCase(data);
+        const addTag = (txt, cls) => { const s = document.createElement('span'); s.className = `tag ${cls}`; s.textContent = txt; tagsBox.appendChild(s); };
+        tags.crimes.forEach(t => addTag(t, 'tag-crime'));
+        tags.sentences.forEach(t => addTag(t, 'tag-sentence'));
+        tags.reasons.forEach(t => addTag(t, 'tag-reason'));
+    }
+
+    function renderReasoning(items, container, term) {
+        items.forEach(item => {
+            if (item.text) {
+                const h = document.createElement(item.level <= 2 ? 'h3' : 'h4');
+                h.className = `level-${item.level} indent-${item.level-1}`;
+                h.textContent = item.text; container.appendChild(h);
+            }
+            (item.content || []).forEach(p => {
+                const pe = document.createElement('p'); pe.className = `text-paragraph indent-${item.level}`;
+                pe.textContent = p; container.appendChild(pe);
             });
-            
+            if (item.children) renderReasoning(item.children, container, term);
+        });
+    }
+
+    function renderSidebar(list, term = '') {
+        caseListEl.innerHTML = '';
+        list.forEach(d => {
+            const el = document.createElement('div'); el.className = 'case-item';
+            const isRev = (d.metadata.case_no || '').includes('復查');
+            el.innerHTML = `<div class="case-type-badge ${isRev?'badge-rev':'badge-orig'}">${isRev?'復':'司'}</div><div class="case-info"><div class="case-id">${d.metadata.case_no}</div><div class="case-subject">${d.metadata.subject || d.filename}</div></div>`;
+            el.onclick = () => { switchView('doc'); renderDocument(d, term); window.location.hash = encodeURIComponent(d.id); };
             caseListEl.appendChild(el);
         });
     }
 
-    function filterCases(term) {
-        const lowerTerm = term.toLowerCase().trim();
-        if (!lowerTerm) {
-            renderSidebar(allCases);
-            return;
-        }
-
-        const filtered = allCases.filter(item => {
-            const no = (item.metadata.case_no || '').toLowerCase();
-            const subj = (item.metadata.subject || '').toLowerCase();
-            const applicant = (item.metadata.applicant || '').toLowerCase();
-            const fname = (item.filename || '').toLowerCase();
-            const fullText = (item.content && item.content.full_text) ? item.content.full_text.toLowerCase() : '';
-            
-            return no.includes(lowerTerm) || 
-                   subj.includes(lowerTerm) || 
-                   applicant.includes(lowerTerm) ||
-                   fname.includes(lowerTerm) ||
-                   fullText.includes(lowerTerm); // 全文檢索
+    function renderStatsDashboard() {
+        const stats = { total: allDecisions.length, crime:{}, sentence:{}, reason:{} };
+        allDecisions.forEach(d => {
+            const t = analyzeCase(d);
+            t.crimes.forEach(x => stats.crime[x] = (stats.crime[x]||0)+1);
+            t.sentences.forEach(x => stats.sentence[x] = (stats.sentence[x]||0)+1);
+            t.reasons.forEach(x => stats.reason[x] = (stats.reason[x]||0)+1);
         });
-
-        renderSidebar(filtered, lowerTerm);
+        document.getElementById('stats-overview').innerHTML = `<div class="stat-card"><span class="stat-number">${stats.total}</span><span class="stat-label">總文件</span></div>`;
+        const draw = (id, data, cls) => {
+            const el = document.getElementById(id); el.innerHTML = '';
+            Object.entries(data).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([l, v]) => {
+                const row = document.createElement('div'); row.className = 'chart-row';
+                row.innerHTML = `<div class="chart-label">${l}</div><div class="chart-bar-container"><div class="chart-bar ${cls}" style="width:${(v/stats.total)*100}%"></div></div><div class="chart-value">${v}</div>`;
+                el.appendChild(row);
+            });
+        };
+        draw('chart-crime', stats.crime, 'crime'); draw('chart-sentence', stats.sentence, 'sentence'); draw('chart-reason', stats.reason, 'reason');
     }
 
     // --- Init ---
-    
-    // Check if data loaded
-    if (window.DECISIONS_DATA) {
-        allCases = window.DECISIONS_DATA;
-        renderSidebar(allCases);
-        
-        // Auto-select first case
-        if (allCases.length > 0) {
-             const firstItem = document.querySelector('.case-item');
-             if (firstItem) firstItem.click();
-        }
-    } else {
-        caseListEl.innerHTML = '<div class="empty-state">無法載入資料檔案 (decision_data.js)</div>';
+    if (window.DATA_STORE) {
+        allDecisions = sortCases(window.DATA_STORE.decisions || []);
+        allRevocations = window.DATA_STORE.revocations || [];
+        renderSidebar(allDecisions);
+        switchView('doc');
+        if (allDecisions.length) renderDocument(allDecisions[0]);
+        switchListTab(1);
     }
-
-    // Search Listener
-    searchInput.addEventListener('input', (e) => {
-        filterCases(e.target.value);
-    });
-
 </script>
-
 </body>
 </html>

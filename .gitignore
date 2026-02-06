@@ -181,3 +181,5 @@ cython_debug/
 .cursorindexingignore
 /demo
 /downloads_ey_tjb
+/list
+/processed_list
