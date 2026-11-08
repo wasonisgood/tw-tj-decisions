@@ -24,8 +24,10 @@
             --tag-sentence-bg: #f3e5f5; --tag-sentence-text: #7b1fa2;
 
             /* Type Badges */
-            --badge-orig-bg: #3498db;
-            --badge-rev-bg: #e67e22;
+            --badge-judicial: #3498db;
+            --badge-admin: #27ae60;
+            --badge-both: #8e44ad;
+            --badge-other: #95a5a6;
 
             --font-serif: 'Noto Serif TC', serif;
             --font-sans: 'Noto Sans TC', sans-serif;
@@ -133,8 +135,20 @@
             padding: 2px 5px;
             border-radius: 3px; color: #fff; font-weight: bold; flex-shrink: 0; width: 24px; text-align: center;
         }
-        .badge-orig { background-color: var(--badge-orig-bg); }
-        .badge-rev { background-color: var(--badge-rev-bg); }
+        .badge-judicial { background-color: var(--badge-judicial); }
+        .badge-admin { background-color: var(--badge-admin); }
+        .badge-both { background-color: var(--badge-both); }
+        .badge-investigation { background-color: #f39c12; }
+        .badge-review { background-color: #d35400; }
+        .badge-other { background-color: var(--badge-other); }
+
+        .status-badge {
+            font-size: 0.65rem; padding: 1px 4px; border-radius: 2px; margin-left: 5px;
+            border: 1px solid rgba(255,255,255,0.5); display: inline-block; vertical-align: middle;
+        }
+        .status-rejected { color: #ffcccc; border-color: #ffcccc; }
+        .status-partial { color: #ffe0b2; border-color: #ffe0b2; }
+        .status-dismissed { color: #d1d1d1; border-color: #d1d1d1; }
 
         .case-info { flex: 1; overflow: hidden; }
         .case-id { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 2px; font-weight: 500; }
@@ -172,10 +186,10 @@
         .main-text-label { font-weight: 700; color: var(--accent-color); margin-bottom: 10px; display: block; }
         
         .content-section { font-family: var(--font-serif); line-height: 1.8; color: #333; }
-        .level-1 { font-size: 1.4rem; font-weight: 700; margin-top: 40px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #000; }
-        .level-2 { font-size: 1.2rem; font-weight: 600; margin-top: 25px; margin-bottom: 15px; color: #444; }
-        .level-3 { font-size: 1.1rem; font-weight: 600; margin-top: 20px; margin-bottom: 10px; color: #555; }
-        .level-4, .level-5 { font-size: 1rem; font-weight: 600; margin-top: 15px; color: #666; }
+        .level-1 { font-size: 1.3rem; margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; color: #000; text-align: justify; }
+        .level-2 { font-size: 1.15rem; margin-top: 20px; margin-bottom: 10px; color: #333; text-align: justify; }
+        .level-3 { font-size: 1.05rem; margin-top: 15px; margin-bottom: 8px; color: #444; text-align: justify; }
+        .level-4, .level-5 { font-size: 1rem; margin-top: 10px; color: #555; text-align: justify; }
         .text-paragraph { margin-bottom: 15px; text-align: justify; font-size: 1.05rem; }
         .indent-1 { margin-left: 0; } .indent-2 { margin-left: 1.5em; } .indent-3 { margin-left: 3em; }
 
@@ -385,20 +399,31 @@
     // --- Logic ---
     function sortCases(cases) {
         return cases.sort((a, b) => {
-            const getInfo = (item) => {
-                const no = item.metadata.case_no || "";
-                let type = no.includes("促轉司字") ? 0 : (no.includes("復查") ? 1 : 2);
-                const num = parseInt((no.match(/第(\d+)號/) || [])[1]) || 999999;
-                return { type, num };
-            };
-            const infoA = getInfo(a), infoB = getInfo(b);
-            return infoA.type !== infoB.type ? infoA.type - infoB.type : infoA.num - infoB.num;
+            // 1. 判斷是否應該置底 (駁回、不受理或複查)
+            const isEnd = (item) => (['rejected', 'dismissed'].includes(item.result_status) || item._type_char === '複') ? 1 : 0;
+            const endA = isEnd(a), endB = isEnd(b);
+            if (endA !== endB) return endA - endB;
+
+            // 2. 來源排序 (促轉會 tjc 優先)
+            const sourcePrio = (s) => s === 'tjc' ? 0 : 1;
+            const spA = sourcePrio(a.source), spB = sourcePrio(b.source);
+            if (spA !== spB) return spA - spB;
+
+            // 3. 類型優先級 (司 > 行 > 兼 > 調 > 他)
+            // Fix: 0 is falsy, so 0 || 9 becomes 9. Must use undefined check.
+            const prioA = (a._sort_type_prio !== undefined) ? a._sort_type_prio : 9;
+            const prioB = (b._sort_type_prio !== undefined) ? b._sort_type_prio : 9;
+            if (prioA !== prioB) return prioA - prioB;
+
+            // 4. 年份與號碼
+            if (a._sort_year !== b._sort_year) return a._sort_year - b._sort_year;
+            return a._sort_num - b._sort_num;
         });
     }
 
     function analyzeCase(item) {
         if (item._analysis) return item._analysis;
-        const text = (item.content.full_text || '') + (item.content.main_text || '') + (item.content.reasoning || '');
+        const text = (item.main_text || '') + (item.facts || '') + (item.reasons || '');
         const res = { crimes: [], reasons: [], sentences: [] };
         for (let k in TAG_PATTERNS) {
             TAG_PATTERNS[k].forEach(p => { if (p.pattern.test(text)) res[k].push(p.label); });
@@ -471,19 +496,31 @@
     function renderDocument(data, term = '') {
         const highlight = (t, s) => { if(!s) return t; return t.replace(new RegExp(`(${s})`, 'gi'), '<span class="highlight">$1</span>'); };
         const container = document.getElementById('doc-container');
-        container.innerHTML = `<div class="doc-header"><div class="doc-title">促進轉型正義委員會決定書</div><div class="doc-subtitle">${data.metadata.case_no || data.filename}</div></div>`;
         
-        if (data.content.main_text) container.innerHTML += `<div class="main-text-box"><span class="main-text-label">【主文】</span><p>${highlight(data.content.main_text, term)}</p></div>`;
-        if (data.content.facts) container.innerHTML += `<div class="main-text-box" style="background:#f0f7ff; border-left-color:#3498db;"><span class="main-text-label" style="color:#3498db">【事實】</span><p style="white-space:pre-wrap">${highlight(data.content.facts, term)}</p></div>`;
+        let displayTitle = '促進轉型正義委員會決定書';
+        if (data.source === 'moj') {
+            displayTitle = '法務部平復司法不法及行政不法決定書';
+        }
+        
+        container.innerHTML = `<div class="doc-header"><div class="doc-title">${displayTitle}</div><div class="doc-subtitle">${data.case_no || (data.metadata && data.metadata.case_no) || data.filename}</div></div>`;
+        
+        if (data.main_text) container.innerHTML += `<div class="main-text-box"><span class="main-text-label">【主文】</span><p>${highlight(data.main_text, term)}</p></div>`;
+        if (data.facts) container.innerHTML += `<div class="main-text-box" style="background:#f0f7ff; border-left-color:#3498db;"><span class="main-text-label" style="color:#3498db">【事實】</span><p style="white-space:pre-wrap">${highlight(data.facts, term)}</p></div>`;
         
         const sec = document.createElement('div'); sec.className = 'content-section';
-        if (data.structured_reasoning && data.structured_reasoning.length) renderReasoning(data.structured_reasoning, sec, term);
-        else sec.innerHTML = `<p style="white-space:pre-wrap">${highlight(data.content.reasoning || data.content.full_text || '', term)}</p>`;
+        // Use structured data if available, otherwise raw
+        if (data.structured_reasons && data.structured_reasons.length) {
+             // Basic rendering for structured data if implemented, but for now fallback to reasons string is safer unless we implemented a recursive render
+             // The previous code had renderReasoning but passed 'structured_reasoning'. My parser produces 'structured_reasons'.
+             renderReasoning(data.structured_reasons, sec, term);
+        } else {
+             sec.innerHTML = `<p style="white-space:pre-wrap">${highlight(data.reasons || '', term)}</p>`;
+        }
         container.appendChild(sec);
         
-        document.getElementById('meta-case-no').textContent = data.metadata.case_no || '-';
-        document.getElementById('meta-subject').textContent = data.metadata.subject || '-';
-        document.getElementById('meta-date').textContent = data.metadata.date || '-';
+        document.getElementById('meta-case-no').textContent = data.case_no || (data.metadata && data.metadata.case_no) || '-';
+        document.getElementById('meta-subject').textContent = data.subject || (data.metadata && data.metadata.subject) || '-';
+        document.getElementById('meta-date').textContent = data.date || (data.metadata && data.metadata.date) || '-';
         
         const tagsBox = document.getElementById('meta-tags'); tagsBox.innerHTML = '';
         const tags = analyzeCase(data);
@@ -495,16 +532,51 @@
 
     function renderReasoning(items, container, term) {
         items.forEach(item => {
-            if (item.text) {
-                const h = document.createElement(item.level <= 2 ? 'h3' : 'h4');
-                h.className = `level-${item.level} indent-${item.level-1}`;
-                h.textContent = item.text; container.appendChild(h);
+            const highlight = (t, s) => { if(!s) return t; return t.replace(new RegExp(`(${s})`, 'gi'), '<span class="highlight">$1</span>'); };
+            
+            // 處理內容：如果內容包含換行，將其分割為多段
+            let contentParts = [];
+            if (item.content) {
+                // 將內容依換行符分割，但過濾掉空行
+                contentParts = item.content.split('\n').filter(p => p.trim());
             }
-            (item.content || []).forEach(p => {
-                const pe = document.createElement('p'); pe.className = `text-paragraph indent-${item.level}`;
-                pe.textContent = p; container.appendChild(pe);
-            });
-            if (item.children) renderReasoning(item.children, container, term);
+
+            // 建立容器
+            const wrapper = document.createElement('div');
+            wrapper.className = `level-${item.level} indent-${item.level-1}`;
+            
+            // 第一部分：標題 + 第一段內容 (合併顯示)
+            let firstLine = (item.title || '');
+            if (contentParts.length > 0) {
+                firstLine += (firstLine ? ' ' : '') + contentParts[0];
+            }
+            
+            if (firstLine) {
+                const p = document.createElement('div');
+                // 如果是高層級 (1, 2)，標題行加粗
+                if (item.level <= 2) p.style.fontWeight = '700';
+                p.innerHTML = highlight(firstLine, term);
+                // 內文樣式
+                if (item.level === 0 || item.level > 2) p.className = 'text-paragraph';
+                wrapper.appendChild(p);
+            }
+
+            // 第二部分：剩餘的段落 (換行顯示，保持縮排)
+            for (let i = 1; i < contentParts.length; i++) {
+                const p = document.createElement('p');
+                p.className = `text-paragraph indent-${item.level}`; // 使用相同縮排
+                // 如果第一行有標題，後續段落可能需要額外的縮排來對齊文字(視需求)，目前先保持一致
+                p.style.marginTop = '8px'; // 段落間距
+                p.innerHTML = highlight(contentParts[i], term);
+                wrapper.appendChild(p);
+            }
+            
+            container.appendChild(wrapper);
+            
+            // 遞迴渲染子項
+            if (item.children && item.children.length) {
+                renderReasoning(item.children, container, term);
+            }
         });
     }
 
@@ -512,8 +584,33 @@
         caseListEl.innerHTML = '';
         list.forEach(d => {
             const el = document.createElement('div'); el.className = 'case-item';
-            const isRev = (d.metadata.case_no || '').includes('復查');
-            el.innerHTML = `<div class="case-type-badge ${isRev?'badge-rev':'badge-orig'}">${isRev?'復':'司'}</div><div class="case-info"><div class="case-id">${d.metadata.case_no}</div><div class="case-subject">${d.metadata.subject || d.filename}</div></div>`;
+            
+            // Determine Type Badge
+            let typeClass = 'badge-other';
+            let typeText = d._type_char || '他';
+            
+            if (typeText === '司') typeClass = 'badge-judicial';
+            else if (typeText === '行') typeClass = 'badge-admin';
+            else if (typeText === '兼') typeClass = 'badge-both';
+            else if (typeText === '調') typeClass = 'badge-investigation';
+            else if (typeText === '複') typeClass = 'badge-review';
+
+            // Determine Status Badge
+            let statusHtml = '';
+            if (d.result_status === 'rejected') {
+                statusHtml = '<span class="status-badge status-rejected">駁回</span>';
+            } else if (d.result_status === 'partial') {
+                statusHtml = '<span class="status-badge status-partial">部分</span>';
+            } else if (d.result_status === 'dismissed') {
+                statusHtml = '<span class="status-badge status-dismissed">不受理</span>';
+            }
+
+            el.innerHTML = `
+                <div class="case-type-badge ${typeClass}">${typeText}</div>
+                <div class="case-info">
+                    <div class="case-id">${d.case_no || (d.metadata && d.metadata.case_no) || ''}</div>
+                    <div class="case-subject">${d.subject || (d.metadata && d.metadata.subject) || d.filename} ${statusHtml}</div>
+                </div>`;
             el.onclick = () => { switchView('doc'); renderDocument(d, term); window.location.hash = encodeURIComponent(d.id); };
             caseListEl.appendChild(el);
         });
