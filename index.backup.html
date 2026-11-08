@@ -534,11 +534,14 @@
         items.forEach(item => {
             const highlight = (t, s) => { if(!s) return t; return t.replace(new RegExp(`(${s})`, 'gi'), '<span class="highlight">$1</span>'); };
             
-            // 處理內容：如果內容包含換行，將其分割為多段
+            // 處理內容：如果內容為陣列或包含換行，安全轉換為多段
             let contentParts = [];
-            if (item.content) {
-                // 將內容依換行符分割，但過濾掉空行
-                contentParts = item.content.split('\n').filter(p => p.trim());
+            if (Array.isArray(item.content)) {
+                contentParts = item.content.map(p => String(p).trim()).filter(Boolean);
+            } else if (typeof item.content === 'string') {
+                contentParts = item.content.split('\n').map(p => p.trim()).filter(Boolean);
+            } else if (item.content) {
+                contentParts = [String(item.content).trim()].filter(Boolean);
             }
 
             // 建立容器
